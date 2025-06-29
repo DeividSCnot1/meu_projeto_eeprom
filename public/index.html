@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EEPROM KM Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 20px;
+    }
+    .container {
+      max-width: 480px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      background: #eee;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>EEPROM KM Tool</h2>
+
+    <form id="generateForm">
+      <label for="model">Modelo:</label>
+      <select id="model" name="model">
+        <option value="titan160">Titan 160</option>
+        <option value="biz2018">Biz 2018</option>
+        <option value="cb500x2023">CB 500X 2023</option>
+        <option value="crosser150">Crosser 150</option>
+      </select>
+
+      <label for="new_mileage">Nova Quilometragem:</label>
+      <input type="number" id="new_mileage" name="new_mileage" required min="0" />
+
+      <button type="submit">Gerar Arquivo BIN</button>
+    </form>
+
+    <hr/>
+
+    <form id="readForm" enctype="multipart/form-data">
+      <label for="arquivo_bin">Enviar Arquivo BIN para Leitura:</label>
+      <input type="file" id="arquivo_bin" name="arquivo_bin" accept=".bin" required />
+      <button type="submit">Ler KM do Arquivo</button>
+    </form>
+
+    <div class="result" id="resultado"></div>
+  </div>
+
+  <script>
+    document.getElementById('generateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const model = document.getElementById('model').value;
+      const new_mileage = document.getElementById('new_mileage').value;
+
+      const response = await fetch('/alterar-e-baixar-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, new_mileage })
+      });
+
+      const resultado = document.getElementById('resultado');
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${model}_${new_mileage}km.bin`;
+        document.body.appendChild(a);
+        a.click();
+        resultado.innerText = "Arquivo gerado com sucesso.";
+      } else {
+        const errText = await response.text();
+        resultado.innerText = "Erro: " + errText;
+      }
+    });
+
+    document.getElementById('readForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      const fileInput = document.getElementById('arquivo_bin');
+      formData.append('arquivo_bin', fileInput.files[0]);
+
+      const response = await fetch('/ler-km', {
+        method: 'POST',
+        body: formData
+      });
+
+      const resultado = document.getElementById('resultado');
+      if (response.ok) {
+        const data = await response.json();
+        resultado.innerText = `Modelo: ${data.modelo}\nKM: ${data.km}`;
+      } else {
+        const err = await response.text();
+        resultado.innerText = "Erro: " + err;
+      }
+    });
+  </script>
+</body>
+</html>
