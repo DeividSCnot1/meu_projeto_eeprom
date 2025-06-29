@@ -15,6 +15,7 @@ const port = process.env.PORT || 3000;
 const users = [
   {
     username: 'admin',
+    // senha em texto: "suaSenhaSecreta"
     passwordHash: bcrypt.hashSync('suaSenhaSecreta', 10)
   }
 ];
@@ -23,7 +24,7 @@ app.use(session({
   secret: 'umSegredoBemLongoAqui',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false }
+  cookie: { secure: false }  // em HTTPS, definir secure: true
 }));
 
 app.use(express.urlencoded({ extended: true }));
@@ -74,10 +75,29 @@ app.get('/', (req, res) => {
 const upload = multer({ dest: 'uploads/' });
 
 const mileageLocations = {
-  titan160: [ 0x0098, 0x009C, /* ... */ 0x00E2 ],
-  biz2018:  [ 0x005C, 0x0060, /* ... */ 0x0098 ],
-  cb500x2023: [ 0x0100, 0x0104, /* ... */ 0x013C ],
-  crosser150: [ 0x00A0, 0x00A4, /* ... */ 0x00D8 ]
+  titan160: [
+    0x0098, 0x009C, 0x00A0, 0x00A4, 0x00A8, 0x00AC,
+    0x00B0, 0x00B4, 0x00B8, 0x00BC, 0x00C0, 0x00C4,
+    0x00C8, 0x00CC, 0x00D0, 0x00D4, 0x00D8, 0x00DA,
+    0x00DE, 0x00E0, 0x00E2
+  ],
+  biz2018: [
+    0x005C, 0x0060, 0x0064, 0x0068, 0x006C,
+    0x0070, 0x0074, 0x0078, 0x007C, 0x0080,
+    0x0084, 0x0088, 0x008C, 0x0098
+  ],
+  cb500x2023: [
+    0x0100, 0x0104, 0x0108, 0x010C,
+    0x0110, 0x0114, 0x0118, 0x011C,
+    0x0120, 0x0124, 0x0128, 0x012C,
+    0x0130, 0x0134, 0x0138, 0x013C
+  ],
+  crosser150: [
+    0x00A0, 0x00A4, 0x00A8,
+    0x00B0, 0x00B4, 0x00B8,
+    0x00C0, 0x00C4, 0x00C8,
+    0x00D0, 0x00D4, 0x00D8
+  ]
 };
 
 function convertMileageToEepromBytes(km) {
@@ -156,7 +176,6 @@ app.post('/ler-km', upload.single('arquivo_bin'), async (req, res) => {
 
     // 2) Se não veio override, detecta automaticamente
     if (!leituraOffsets) {
-      // Biz
       const isChecksum = o =>
         o + 4 <= len &&
         bin.readUInt16LE(o) + bin.readUInt16LE(o + 2) === 0xFFFF;

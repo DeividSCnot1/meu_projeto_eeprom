@@ -1,0 +1,12 @@
+# Dependências e build
+/node_modules/
+npm-debug.log*
+
+# Arquivos de teste e uploads locais
+/uploads/
+*.bin
+cookie.txt
+data/test.bin
+
+# Arquivos de lock errôneos em node_modules (se existirem)
+/node_modules/.package-lock.json
